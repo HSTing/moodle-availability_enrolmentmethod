@@ -40,24 +40,19 @@ class frontend extends \core_availability\frontend {
     /** @var int Course id that $allgroups is for */
     protected $allgroupscourseid;
 
-    protected function get_javascript_strings() {
-        return array('anygroup');
-    }
-
     protected function get_javascript_init_params($course, \cm_info $cm = null,
             \section_info $section = null) {
         global $PAGE;
-        // Get all groups for course.
-        $groups = $this->get_all_groups($course->id);
+        
         $manager = new course_enrolment_manager($PAGE, $course);
         $instances = $manager->get_enrolment_instances(true);
-
+        $enrolmentmethodnames = $manager->get_enrolment_instance_names(true);
         // Change to JS array format and return.
         $jsarray = array();
         $context = \context_course::instance($course->id);
         foreach ($instances as $rec) {
             $jsarray[] = (object)array('id' => $rec->id, 'name' =>
-                    format_string($rec->enrol, true, array('context' => $context)));
+                    format_string($enrolmentmethodnames[$rec->id], true, array('context' => $context)));
         }
         return array($jsarray);
     }

@@ -31,5 +31,5 @@ $string['requires_anygroup'] = 'You belong to any group';
 $string['requires_group'] = 'You belong to <strong>{$a}</strong>';
 $string['requires_notanygroup'] = 'You do not belong to any group';
 $string['requires_notgroup'] = 'You do not belong to <strong>{$a}</strong>';
-$string['title'] = 'Group';
+$string['title'] = 'Enrolment method';
 $string['privacy:metadata'] = 'The Restriction by group plugin does not store any personal data.';

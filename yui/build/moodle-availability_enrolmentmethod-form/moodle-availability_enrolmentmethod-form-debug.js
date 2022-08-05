@@ -36,8 +36,7 @@ M.availability_enrolmentmethod.form.getNode = function(json) {
     var html = '<label><span class="pr-3">' + M.util.get_string('title', 'availability_enrolmentmethod') + '</span> ' +
             '<span class="availability-group">' +
             '<select name="id" class="custom-select">' +
-            '<option value="choose">' + M.util.get_string('choosedots', 'moodle') + '</option>' +
-            '<option value="any">' + M.util.get_string('anygroup', 'availability_enrolmentmethod') + '</option>';
+            '<option value="choose">' + M.util.get_string('choosedots', 'moodle') + '</option>';
     for (var i = 0; i < this.groups.length; i++) {
         var group = this.groups[i];
         // String has already been escaped using format_string.
