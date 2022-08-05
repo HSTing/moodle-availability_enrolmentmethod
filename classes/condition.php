@@ -162,22 +162,6 @@ class condition extends \core_availability\condition {
         return true;
     }
 
-    public function update_dependency_id($table, $oldid, $newid) {
-        if ($table === 'groups' && (int) $this->groupid === (int) $oldid) {
-            $this->groupid = $newid;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Wipes the static cache used to store grouping names.
-     */
-    public static function wipe_static_cache() {
-        self::$groupnames = array();
-    }
-
     public function is_applied_to_user_lists() {
         // Enrolment method conditions are assumed to be 'permanent', so they affect the
         // display of user lists for activities.
