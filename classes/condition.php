@@ -37,7 +37,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class condition extends \core_availability\condition {
-    /** @var int ID of group that this condition requires, or 0 = any group */
+    /** @var int ID of enrolment method that this condition requires */
     protected $enrolmentmethodid;
 
     /**
@@ -47,7 +47,7 @@ class condition extends \core_availability\condition {
      * @throws \coding_exception If invalid data structure.
      */
     public function __construct($structure) {
-        // Get group id.
+        // Get enrolment method id.
         if (!property_exists($structure, 'id')) {
             $this->enrolmentmethodid = 0;
         } else if (is_int($structure->id)) {
@@ -58,7 +58,7 @@ class condition extends \core_availability\condition {
     }
 
     public function save() {
-        $result = (object) array('type' => 'group');
+        $result = (object) array('type' => 'enrolmentmethod');
         if ($this->enrolmentmethodid) {
             $result->id = $this->enrolmentmethodid;
         }
@@ -87,9 +87,6 @@ class condition extends \core_availability\condition {
         global $PAGE;
         
         if ($this->enrolmentmethodid) {
-            // Need to get the name for the group. Unfortunately this requires
-            // a database query. To save queries, get all groups for course at
-            // once in a static cache.
             $course = $info->get_course();
             
             $manager = new course_enrolment_manager($PAGE, $course);
@@ -115,29 +112,12 @@ class condition extends \core_availability\condition {
         return $this->enrolmentmethodid ? '#' . $this->enrolmentmethodid : 'any';
     }
 
-    /**
-     * Include this condition only if we are including groups in restore, or
-     * if it's a generic 'same activity' one.
-     *
-     * @param int $restoreid The restore Id.
-     * @param int $courseid The ID of the course.
-     * @param base_logger $logger The logger being used.
-     * @param string $name Name of item being restored.
-     * @param base_task $task The task being performed.
-     *
-     * @return Integer groupid
-     */
-    public function include_after_restore($restoreid, $courseid, \base_logger $logger,
-            $name, \base_task $task) {
-        return !$this->enrolmentmethodid || $task->get_setting_value('groups');
-    }
-
     public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
         global $DB;
         if (!$this->enrolmentmethodid) {
             return false;
         }
-        $rec = \restore_dbops::get_backup_ids_record($restoreid, 'group', $this->enrolmentmethodid);
+        $rec = \restore_dbops::get_backup_ids_record($restoreid, 'enrol', $this->enrolmentmethodid);
         if (!$rec || !$rec->newitemid) {
             // If we are on the same course (e.g. duplicate) then we can just
             // use the existing one.
