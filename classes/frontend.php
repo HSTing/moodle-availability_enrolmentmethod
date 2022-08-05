@@ -37,22 +37,20 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class frontend extends \core_availability\frontend {
-    /** @var array Array of group info for course */
-    protected $allgroups;
-    /** @var int Course id that $allgroups is for */
-    protected $allgroupscourseid;
+    /** @var array Array of enrolment methods info for course */
+    protected array $allenrolmentmethods;
 
     protected function get_javascript_init_params($course, \cm_info $cm = null,
             \section_info $section = null) {
         global $PAGE;
 
         $manager = new course_enrolment_manager($PAGE, $course);
-        $instances = $manager->get_enrolment_instances(true);
+        $enrolmentinstances = $manager->get_enrolment_instances(true);
         $enrolmentmethodnames = $manager->get_enrolment_instance_names(true);
         // Change to JS array format and return.
         $jsarray = array();
         $context = \context_course::instance($course->id);
-        foreach ($instances as $rec) {
+        foreach ($enrolmentinstances as $rec) {
             $jsarray[] = (object) array('id' => $rec->id, 'name' =>
                     format_string($enrolmentmethodnames[$rec->id], true, array('context' => $context)));
         }
@@ -60,10 +58,10 @@ class frontend extends \core_availability\frontend {
     }
 
     /**
-     * Gets all groups for the given course.
+     * Gets all enrolment methods for the given course.
      *
      * @param int $courseid Course id
-     * @return array Array of all the group objects
+     * @return array Array of all the enrolment method objects
      */
     protected function get_all_enrolmentmethods($courseid) {
         global $PAGE;
