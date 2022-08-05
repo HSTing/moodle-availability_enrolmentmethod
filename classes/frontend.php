@@ -24,7 +24,9 @@
 
 namespace availability_enrolmentmethod;
 require_once($CFG->dirroot . '/enrol/locallib.php');
+
 use course_enrolment_manager;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -43,7 +45,7 @@ class frontend extends \core_availability\frontend {
     protected function get_javascript_init_params($course, \cm_info $cm = null,
             \section_info $section = null) {
         global $PAGE;
-        
+
         $manager = new course_enrolment_manager($PAGE, $course);
         $instances = $manager->get_enrolment_instances(true);
         $enrolmentmethodnames = $manager->get_enrolment_instance_names(true);
@@ -51,7 +53,7 @@ class frontend extends \core_availability\frontend {
         $jsarray = array();
         $context = \context_course::instance($course->id);
         foreach ($instances as $rec) {
-            $jsarray[] = (object)array('id' => $rec->id, 'name' =>
+            $jsarray[] = (object) array('id' => $rec->id, 'name' =>
                     format_string($enrolmentmethodnames[$rec->id], true, array('context' => $context)));
         }
         return array($jsarray);
@@ -63,15 +65,13 @@ class frontend extends \core_availability\frontend {
      * @param int $courseid Course id
      * @return array Array of all the group objects
      */
-    protected function get_all_groups($courseid) {
-        global $CFG;
-        require_once($CFG->libdir . '/grouplib.php');
-
-        if ($courseid != $this->allgroupscourseid) {
-            $this->allgroups = groups_get_all_groups($courseid, 0, 0, 'g.id, g.name');
-            $this->allgroupscourseid = $courseid;
-        }
-        return $this->allgroups;
+    protected function get_all_enrolmentmethods($courseid) {
+        global $PAGE;
+        $course = get_course($courseid);
+        $manager = new course_enrolment_manager($PAGE, $course);
+        $this->allenrolmentmethods = $manager->get_enrolment_instances(true);
+        $this->allgroupscourseid = $courseid;
+        return $this->allenrolmentmethods;
     }
 
     protected function allow_add($course, \cm_info $cm = null,
@@ -79,6 +79,6 @@ class frontend extends \core_availability\frontend {
         global $CFG;
 
         // Only show this option if there are some groups.
-        return count($this->get_all_groups($course->id)) > 0;
+        return count($this->get_all_enrolmentmethods($course->id)) > 0;
     }
 }
