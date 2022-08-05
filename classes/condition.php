@@ -37,11 +37,8 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class condition extends \core_availability\condition {
-    /** @var array Array from group id => name */
-    protected static $groupnames = array();
-
     /** @var int ID of group that this condition requires, or 0 = any group */
-    protected $groupid;
+    protected $enrolmentmethodid;
 
     /**
      * Constructor.
@@ -52,9 +49,9 @@ class condition extends \core_availability\condition {
     public function __construct($structure) {
         // Get group id.
         if (!property_exists($structure, 'id')) {
-            $this->groupid = 0;
+            $this->enrolmentmethodid = 0;
         } else if (is_int($structure->id)) {
-            $this->groupid = $structure->id;
+            $this->enrolmentmethodid = $structure->id;
         } else {
             throw new \coding_exception('Invalid ->id for group condition');
         }
@@ -62,8 +59,8 @@ class condition extends \core_availability\condition {
 
     public function save() {
         $result = (object) array('type' => 'group');
-        if ($this->groupid) {
-            $result->id = $this->groupid;
+        if ($this->enrolmentmethodid) {
+            $result->id = $this->enrolmentmethodid;
         }
         return $result;
     }
@@ -75,7 +72,7 @@ class condition extends \core_availability\condition {
         $manager = new course_enrolment_manager($PAGE, $course);
         $userenrolments = $manager->get_user_enrolments($userid);
         foreach ($userenrolments as $userenrolment) {
-            if ($this->groupid === (int) $userenrolment->enrolid) {
+            if ($this->enrolmentmethodid === (int) $userenrolment->enrolid) {
                 $allow = true;
                 break;
             }
@@ -88,25 +85,22 @@ class condition extends \core_availability\condition {
 
     public function get_description($full, $not, \core_availability\info $info) {
         global $PAGE;
-
-        if ($this->groupid) {
+        
+        if ($this->enrolmentmethodid) {
             // Need to get the name for the group. Unfortunately this requires
             // a database query. To save queries, get all groups for course at
             // once in a static cache.
             $course = $info->get_course();
+            
             $manager = new course_enrolment_manager($PAGE, $course);
-            $instances = $manager->get_enrolment_instances(true);
-            $instancenames = [];
-            foreach ($instances as $rec) {
-                $instancenames[$rec->id] = $rec->enrol;
-            }
+            $enrolmentmethodnames = $manager->get_enrolment_instance_names(true);
 
             // If it still doesn't exist, it must have been misplaced.
-            if (!array_key_exists($this->groupid, $instancenames)) {
+            if (!array_key_exists($this->enrolmentmethodid, $enrolmentmethodnames)) {
                 $name = get_string('missing', 'availability_enrolmentmethod');
             } else {
                 // Not safe to call format_string here; use the special function to call it later.
-                $name = self::description_format_string($instancenames[$this->groupid]);
+                $name = self::description_format_string($enrolmentmethodnames[$this->enrolmentmethodid]);
             }
         } else {
             return get_string($not ? 'requires_notanygroup' : 'requires_anygroup',
@@ -118,7 +112,7 @@ class condition extends \core_availability\condition {
     }
 
     protected function get_debug_string() {
-        return $this->groupid ? '#' . $this->groupid : 'any';
+        return $this->enrolmentmethodid ? '#' . $this->enrolmentmethodid : 'any';
     }
 
     /**
@@ -135,29 +129,29 @@ class condition extends \core_availability\condition {
      */
     public function include_after_restore($restoreid, $courseid, \base_logger $logger,
             $name, \base_task $task) {
-        return !$this->groupid || $task->get_setting_value('groups');
+        return !$this->enrolmentmethodid || $task->get_setting_value('groups');
     }
 
     public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
         global $DB;
-        if (!$this->groupid) {
+        if (!$this->enrolmentmethodid) {
             return false;
         }
-        $rec = \restore_dbops::get_backup_ids_record($restoreid, 'group', $this->groupid);
+        $rec = \restore_dbops::get_backup_ids_record($restoreid, 'group', $this->enrolmentmethodid);
         if (!$rec || !$rec->newitemid) {
             // If we are on the same course (e.g. duplicate) then we can just
             // use the existing one.
             if ($DB->record_exists('groups',
-                    array('id' => $this->groupid, 'courseid' => $courseid))) {
+                    array('id' => $this->enrolmentmethodid, 'courseid' => $courseid))) {
                 return false;
             }
             // Otherwise it's a warning.
-            $this->groupid = -1;
+            $this->enrolmentmethodid = -1;
             $logger->process('Restored item (' . $name .
                     ') has availability condition on group that was not restored',
                     \backup::LOG_WARNING);
         } else {
-            $this->groupid = (int) $rec->newitemid;
+            $this->enrolmentmethodid = (int) $rec->newitemid;
         }
         return true;
     }
@@ -191,7 +185,7 @@ class condition extends \core_availability\condition {
             $allow = false;
 
             foreach ($userenrolments as $userenrolment) {
-                if ($this->groupid === (int) $userenrolment->enrolid) {
+                if ($this->enrolmentmethodid === (int) $userenrolment->enrolid) {
                     $allow = true;
                     break;
                 }
@@ -238,12 +232,12 @@ class condition extends \core_availability\condition {
 
         // Condition for specified or any group.
         $matchparams = array();
-        if ($this->groupid) {
+        if ($this->enrolmentmethodid) {
             $matchsql = "SELECT 1
                            FROM {groups_members} gm
                           WHERE gm.userid = userids.id
                                 AND gm.groupid = " .
-                    self::unique_sql_parameter($matchparams, $this->groupid);
+                    self::unique_sql_parameter($matchparams, $this->enrolmentmethodid);
         } else {
             $matchsql = "SELECT 1
                            FROM {groups_members} gm
