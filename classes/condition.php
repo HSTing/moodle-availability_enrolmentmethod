@@ -87,7 +87,7 @@ class condition extends \core_availability\condition {
     }
 
     public function get_description($full, $not, \core_availability\info $info) {
-        global $DB, $PAGE;
+        global $PAGE;
 
         if ($this->groupid) {
             // Need to get the name for the group. Unfortunately this requires
