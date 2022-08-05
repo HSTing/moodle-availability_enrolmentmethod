@@ -75,7 +75,7 @@ class condition extends \core_availability\condition {
         $manager = new course_enrolment_manager($PAGE, $course);
         $userenrolments = $manager->get_user_enrolments($userid);
         foreach ($userenrolments as $userenrolment) {
-            if ($this->groupid === (int)$userenrolment->enrolid) {
+            if ($this->groupid === (int) $userenrolment->enrolid) {
                 $allow = true;
                 break;
             }
@@ -100,7 +100,7 @@ class condition extends \core_availability\condition {
             foreach ($instances as $rec) {
                 $instancenames[$rec->id] = $rec->enrol;
             }
-            
+
             // If it still doesn't exist, it must have been misplaced.
             if (!array_key_exists($this->groupid, $instancenames)) {
                 $name = get_string('missing', 'availability_enrolmentmethod');
@@ -179,14 +179,14 @@ class condition extends \core_availability\condition {
     }
 
     public function is_applied_to_user_lists() {
-        // Group conditions are assumed to be 'permanent', so they affect the
+        // Enrolment method conditions are assumed to be 'permanent', so they affect the
         // display of user lists for activities.
         return true;
     }
 
     public function filter_user_list(array $users, $not, \core_availability\info $info,
             \core_availability\capability_checker $checker) {
-        global $CFG, $DB;
+        global $CFG, $DB, $PAGE;
 
         // If the array is empty already, just return it.
         if (!$users) {
@@ -195,31 +195,24 @@ class condition extends \core_availability\condition {
 
         require_once($CFG->libdir . '/grouplib.php');
         $course = $info->get_course();
-
         // List users for this course who match the condition.
-        if ($this->groupid) {
-            $groupusers = groups_get_members($this->groupid, 'u.id', 'u.id ASC');
-        } else {
-            $groupusers = $DB->get_records_sql("
-                    SELECT DISTINCT gm.userid
-                      FROM {groups} g
-                      JOIN {groups_members} gm ON gm.groupid = g.id
-                     WHERE g.courseid = ?", array($course->id));
-        }
 
-        // List users who have access all groups.
-        $aagusers = $checker->get_users_by_capability('moodle/site:accessallgroups');
+        $manager = new course_enrolment_manager($PAGE, $course);
 
         // Filter the user list.
         $result = array();
         foreach ($users as $id => $user) {
-            // Always include users with access all groups.
-            if (array_key_exists($id, $aagusers)) {
-                $result[$id] = $user;
-                continue;
-            }
             // Other users are included or not based on group membership.
-            $allow = array_key_exists($id, $groupusers);
+            $userenrolments = $manager->get_user_enrolments($user->id);
+            $allow = false;
+
+            foreach ($userenrolments as $userenrolment) {
+                if ($this->groupid === (int) $userenrolment->enrolid) {
+                    $allow = true;
+                    break;
+                }
+            }
+
             if ($not) {
                 $allow = !$allow;
             }
