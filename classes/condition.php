@@ -53,7 +53,7 @@ class condition extends \core_availability\condition {
         } else if (is_int($structure->id)) {
             $this->enrolmentmethodid = $structure->id;
         } else {
-            throw new \coding_exception('Invalid ->id for group condition');
+            throw new \coding_exception('Invalid ->id for enrolment method condition');
         }
     }
 
@@ -99,9 +99,6 @@ class condition extends \core_availability\condition {
                 // Not safe to call format_string here; use the special function to call it later.
                 $name = self::description_format_string($enrolmentmethodnames[$this->enrolmentmethodid]);
             }
-        } else {
-            return get_string($not ? 'requires_notanygroup' : 'requires_anygroup',
-                    'availability_enrolmentmethod');
         }
 
         return get_string($not ? 'requires_notgroup' : 'requires_group',
@@ -121,14 +118,14 @@ class condition extends \core_availability\condition {
         if (!$rec || !$rec->newitemid) {
             // If we are on the same course (e.g. duplicate) then we can just
             // use the existing one.
-            if ($DB->record_exists('groups',
+            if ($DB->record_exists('enrol',
                     array('id' => $this->enrolmentmethodid, 'courseid' => $courseid))) {
                 return false;
             }
             // Otherwise it's a warning.
             $this->enrolmentmethodid = -1;
             $logger->process('Restored item (' . $name .
-                    ') has availability condition on group that was not restored',
+                    ') has availability condition on enrolment method that was not restored',
                     \backup::LOG_WARNING);
         } else {
             $this->enrolmentmethodid = (int) $rec->newitemid;
@@ -151,7 +148,6 @@ class condition extends \core_availability\condition {
             return $users;
         }
 
-        require_once($CFG->libdir . '/grouplib.php');
         $course = $info->get_course();
         // List users for this course who match the condition.
 
@@ -160,7 +156,6 @@ class condition extends \core_availability\condition {
         // Filter the user list.
         $result = array();
         foreach ($users as $id => $user) {
-            // Other users are included or not based on group membership.
             $userenrolments = $manager->get_user_enrolments($user->id);
             $allow = false;
 
@@ -187,14 +182,14 @@ class condition extends \core_availability\condition {
      * Intended for unit testing, as normally the JSON values are constructed
      * by JavaScript code.
      *
-     * @param int $groupid Required group id (0 = any group)
+     * @param int $enrolmentmethodid Required enrolmentmethod id
      * @return stdClass Object representing condition
      */
-    public static function get_json($groupid = 0) {
-        $result = (object) array('type' => 'group');
+    public static function get_json($enrolmentmethodid = 0) {
+        $result = (object) array('type' => 'enrolmentmethod');
         // Id is only included if set.
-        if ($groupid) {
-            $result->id = (int) $groupid;
+        if ($enrolmentmethodid) {
+            $result->id = (int) $enrolmentmethodid;
         }
         return $result;
     }

@@ -83,7 +83,7 @@ M.availability_enrolmentmethod.form.fillErrors = function(errors, node) {
 
     // Check group item id.
     if (value.id && value.id === 'choose') {
-        errors.push('availability_enrolmentmethod:error_selectgroup');
+        errors.push('availability_enrolmentmethod:error_selectenrolmentmethod');
     }
 };
 
