@@ -101,7 +101,7 @@ class condition extends \core_availability\condition {
             }
         }
 
-        return get_string($not ? 'requires_notgroup' : 'requires_group',
+        return get_string($not ? 'requires_notenrolmentmethod' : 'requires_enrolmentmethod',
                 'availability_enrolmentmethod', $name);
     }
 
@@ -141,7 +141,7 @@ class condition extends \core_availability\condition {
 
     public function filter_user_list(array $users, $not, \core_availability\info $info,
             \core_availability\capability_checker $checker) {
-        global $CFG, $DB, $PAGE;
+        global $PAGE;
 
         // If the array is empty already, just return it.
         if (!$users) {
@@ -156,7 +156,7 @@ class condition extends \core_availability\condition {
         // Filter the user list.
         $result = array();
         foreach ($users as $id => $user) {
-            $userenrolments = $manager->get_user_enrolments($user->id);
+            $userenrolments = $manager->get_user_enrolments($id);
             $allow = false;
 
             foreach ($userenrolments as $userenrolment) {
@@ -192,41 +192,5 @@ class condition extends \core_availability\condition {
             $result->id = (int) $enrolmentmethodid;
         }
         return $result;
-    }
-
-    public function get_user_list_sql($not, \core_availability\info $info, $onlyactive) {
-        global $DB;
-
-        // Get enrolled users with access all groups. These always are allowed.
-        list($aagsql, $aagparams) = get_enrolled_sql(
-                $info->get_context(), 'moodle/site:accessallgroups', 0, $onlyactive);
-
-        // Get all enrolled users.
-        list ($enrolsql, $enrolparams) =
-                get_enrolled_sql($info->get_context(), '', 0, $onlyactive);
-
-        // Condition for specified or any group.
-        $matchparams = array();
-        if ($this->enrolmentmethodid) {
-            $matchsql = "SELECT 1
-                           FROM {groups_members} gm
-                          WHERE gm.userid = userids.id
-                                AND gm.groupid = " .
-                    self::unique_sql_parameter($matchparams, $this->enrolmentmethodid);
-        } else {
-            $matchsql = "SELECT 1
-                           FROM {groups_members} gm
-                           JOIN {groups} g ON g.id = gm.groupid
-                          WHERE gm.userid = userids.id
-                                AND g.courseid = " .
-                    self::unique_sql_parameter($matchparams, $info->get_course()->id);
-        }
-
-        // Overall query combines all this.
-        $condition = $not ? 'NOT' : '';
-        $sql = "SELECT userids.id
-                  FROM ($enrolsql) userids
-                 WHERE (userids.id IN ($aagsql)) OR $condition EXISTS ($matchsql)";
-        return array($sql, array_merge($enrolparams, $aagparams, $matchparams));
     }
 }
