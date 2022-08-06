@@ -117,7 +117,7 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         // Valid (with id).
         $structure->id = 123;
         $cond = new condition($structure);
-        $this->assertEquals('{group:#123}', (string) $cond);
+        $this->assertEquals('{enrolmentmethod:#123}', (string) $cond);
 
         // Valid (no id).
         unset($structure->id);
@@ -131,25 +131,13 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
     public function test_save() {
         $structure = (object) array('id' => 123);
         $cond = new condition($structure);
-        $structure->type = 'group';
+        $structure->type = 'enrolmentmethod';
         $this->assertEquals($structure, $cond->save());
 
         $structure = (object) array();
         $cond = new condition($structure);
-        $structure->type = 'group';
+        $structure->type = 'enrolmentmethod';
         $this->assertEquals($structure, $cond->save());
-    }
-
-    /**
-     * Tests the update_dependency_id() function.
-     */
-    public function test_update_dependency_id() {
-        $cond = new condition((object) array('id' => 123));
-        $this->assertFalse($cond->update_dependency_id('frogs', 123, 456));
-        $this->assertFalse($cond->update_dependency_id('groups', 12, 34));
-        $this->assertTrue($cond->update_dependency_id('groups', 123, 456));
-        $after = $cond->save();
-        $this->assertEquals(456, $after->id);
     }
 
     /**
