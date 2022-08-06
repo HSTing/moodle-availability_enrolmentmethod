@@ -1,5 +1,5 @@
 /**
- * JavaScript for form editing group conditions.
+ * JavaScript for form editing enrolmentmethod conditions.
  *
  * @module moodle-availability_enrolmentmethod-form
  */
@@ -12,33 +12,33 @@ M.availability_enrolmentmethod = M.availability_enrolmentmethod || {};
 M.availability_enrolmentmethod.form = Y.Object(M.core_availability.plugin);
 
 /**
- * Groups available for selection (alphabetical order).
+ * Enrolmentmethods available for selection (alphabetical order).
  *
- * @property groups
+ * @property enrolmentmethods
  * @type Array
  */
-M.availability_enrolmentmethod.form.groups = null;
+M.availability_enrolmentmethod.form.enrolmentmethods = null;
 
 /**
  * Initialises this plugin.
  *
  * @method initInner
- * @param {Array} groups Array of objects containing groupid => name
+ * @param {Array} enrolmentmethods Array of objects containing enrolmentmethodid => name
  */
-M.availability_enrolmentmethod.form.initInner = function(groups) {
-    this.groups = groups;
+M.availability_enrolmentmethod.form.initInner = function(enrolmentmethods) {
+    this.enrolmentmethods = enrolmentmethods;
 };
 
 M.availability_enrolmentmethod.form.getNode = function(json) {
     // Create HTML structure.
     var html = '<label><span class="pr-3">' + M.util.get_string('title', 'availability_enrolmentmethod') + '</span> ' +
-            '<span class="availability-group">' +
+            '<span class="availability-enrolmentmethod">' +
             '<select name="id" class="custom-select">' +
             '<option value="choose">' + M.util.get_string('choosedots', 'moodle') + '</option>';
-    for (var i = 0; i < this.groups.length; i++) {
-        var group = this.groups[i];
+    for (var i = 0; i < this.enrolmentmethods.length; i++) {
+        var enrolmentmethod = this.enrolmentmethods[i];
         // String has already been escaped using format_string.
-        html += '<option value="' + group.id + '">' + group.name + '</option>';
+        html += '<option value="' + enrolmentmethod.id + '">' + enrolmentmethod.name + '</option>';
     }
     html += '</select></span></label>';
     var node = Y.Node.create('<span class="form-inline">' + html + '</span>');
@@ -79,7 +79,7 @@ M.availability_enrolmentmethod.form.fillErrors = function(errors, node) {
     var value = {};
     this.fillValue(value, node);
 
-    // Check group item id.
+    // Check enrolmentmethod item id.
     if (value.id && value.id === 'choose') {
         errors.push('availability_enrolmentmethod:error_selectenrolmentmethod');
     }

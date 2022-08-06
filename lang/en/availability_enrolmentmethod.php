@@ -22,11 +22,11 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['description'] = 'Allow only students who belong to a specified group, or all groups.';
+$string['description'] = 'Allow only students who belong to a specified enrolment method.';
 $string['missing'] = '(Missing enrolment method)';
 $string['pluginname'] = 'Restriction by enrolment method';
 $string['error_selectenrolmentmethod'] = 'You must select a enrolment method.';
-$string['requires_group'] = 'You belong to <strong>{$a}</strong>';
-$string['requires_notgroup'] = 'You do not belong to <strong>{$a}</strong>';
+$string['requires_enrolmentmethod'] = 'You belong to <strong>{$a}</strong>';
+$string['requires_notenrolmentmethod'] = 'You do not belong to <strong>{$a}</strong>';
 $string['title'] = 'Enrolment method';
 $string['privacy:metadata'] = 'The Restriction by enrolment method plugin does not store any personal data.';
