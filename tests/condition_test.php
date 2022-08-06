@@ -51,24 +51,23 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         $this->resetAfterTest();
         $CFG->enableavailability = true;
 
+        // Get an enrol plugin.
+        $selfenrolmethod = enrol_get_plugin('self');
+
         // Erase static cache before test.
-        condition::wipe_static_cache();
+        /*condition::wipe_static_cache();*/
 
         // Make a test course and user.
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
+        // Enable this enrol plugin for the course.
+        $enrolinstanceid = $selfenrolmethod->add_instance($course);
         $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id);
+        $generator->enrol_user($user->id, $course->id, 'student', 'self');
         $info = new \core_availability\mock_info($course, $user->id);
 
-        // Make 2 test groups, one in a grouping and one not.
-        $grouping = $generator->create_grouping(array('courseid' => $course->id));
-        $group1 = $generator->create_group(array('courseid' => $course->id, 'name' => 'G1!'));
-        groups_assign_grouping($grouping->id, $group1->id);
-        $group2 = $generator->create_group(array('courseid' => $course->id, 'name' => 'G2!'));
-
-        // Do test (not in group).
-        $cond = new condition((object)array('id' => (int)$group1->id));
+        // Do test (not in enrolment method).
+        $cond = new condition((object) array('id' => (int) $enrolinstanceid));
 
         // Check if available (when not available).
         $this->assertFalse($cond->is_available(false, $info, true, $user->id));
@@ -77,10 +76,8 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         $this->assertMatchesRegularExpression('~You belong to.*G1!~', $information);
         $this->assertTrue($cond->is_available(true, $info, true, $user->id));
 
-        // Add user to groups and refresh cache.
-        groups_add_member($group1, $user);
-        groups_add_member($group2, $user);
-        get_fast_modinfo($course->id, 0, true);
+        // Disable enrolment method.
+        $CFG->enrol_plugins_enabled = 'manual';
 
         // Recheck.
         $this->assertTrue($cond->is_available(false, $info, true, $user->id));
@@ -89,26 +86,14 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         $information = \core_availability\info::format_info($information, $course);
         $this->assertMatchesRegularExpression('~do not belong to.*G1!~', $information);
 
-        // Check group 2 works also.
-        $cond = new condition((object)array('id' => (int)$group2->id));
-        $this->assertTrue($cond->is_available(false, $info, true, $user->id));
-
-        // What about an 'any group' condition?
-        $cond = new condition((object)array());
-        $this->assertTrue($cond->is_available(false, $info, true, $user->id));
-        $this->assertFalse($cond->is_available(true, $info, true, $user->id));
-        $information = $cond->get_description(false, true, $info);
-        $information = \core_availability\info::format_info($information, $course);
-        $this->assertMatchesRegularExpression('~do not belong to any~', $information);
-
-        // Admin user doesn't belong to a group, but they can access it
+        // Admin user doesn't belong to an enrolment method, but they can access it
         // either way (positive or NOT).
         $this->setAdminUser();
         $this->assertTrue($cond->is_available(false, $info, true, $USER->id));
         $this->assertTrue($cond->is_available(true, $info, true, $USER->id));
 
-        // Group that doesn't exist uses 'missing' text.
-        $cond = new condition((object)array('id' => $group2->id + 1000));
+        // Enrolment method that doesn't exist uses 'missing' text.
+        $cond = new condition((object) array('id' => $enrolinstanceid + 1000));
         $this->assertFalse($cond->is_available(false, $info, true, $user->id));
         $information = $cond->get_description(false, false, $info);
         $information = \core_availability\info::format_info($information, $course);
@@ -121,7 +106,7 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
      */
     public function test_constructor() {
         // Invalid id (not int).
-        $structure = (object)array('id' => 'bourne');
+        $structure = (object) array('id' => 'bourne');
         try {
             $cond = new condition($structure);
             $this->fail();
@@ -132,24 +117,24 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         // Valid (with id).
         $structure->id = 123;
         $cond = new condition($structure);
-        $this->assertEquals('{group:#123}', (string)$cond);
+        $this->assertEquals('{group:#123}', (string) $cond);
 
         // Valid (no id).
         unset($structure->id);
         $cond = new condition($structure);
-        $this->assertEquals('{group:any}', (string)$cond);
+        $this->assertEquals('{group:any}', (string) $cond);
     }
 
     /**
      * Tests the save() function.
      */
     public function test_save() {
-        $structure = (object)array('id' => 123);
+        $structure = (object) array('id' => 123);
         $cond = new condition($structure);
         $structure->type = 'group';
         $this->assertEquals($structure, $cond->save());
 
-        $structure = (object)array();
+        $structure = (object) array();
         $cond = new condition($structure);
         $structure->type = 'group';
         $this->assertEquals($structure, $cond->save());
@@ -159,7 +144,7 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
      * Tests the update_dependency_id() function.
      */
     public function test_update_dependency_id() {
-        $cond = new condition((object)array('id' => 123));
+        $cond = new condition((object) array('id' => 123));
         $this->assertFalse($cond->update_dependency_id('frogs', 123, 456));
         $this->assertFalse($cond->update_dependency_id('groups', 12, 34));
         $this->assertTrue($cond->update_dependency_id('groups', 123, 456));
@@ -207,7 +192,7 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
 
         // Test 'any group' condition.
         $checker = new \core_availability\capability_checker($info->get_context());
-        $cond = new condition((object)array());
+        $cond = new condition((object) array());
         $result = array_keys($cond->filter_user_list($allusers, false, $info, $checker));
         ksort($result);
         $expected = array($teacher->id, $students[1]->id, $students[2]->id);
@@ -233,7 +218,7 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         $this->assertEquals($expected, $result);
 
         // Test specific group.
-        $cond = new condition((object)array('id' => (int)$group1->id));
+        $cond = new condition((object) array('id' => (int) $group1->id));
         $result = array_keys($cond->filter_user_list($allusers, false, $info, $checker));
         ksort($result);
         $expected = array($teacher->id, $students[1]->id);
