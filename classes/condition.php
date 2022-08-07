@@ -68,15 +68,16 @@ class condition extends \core_availability\condition {
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $PAGE;
         $course = $info->get_course();
-        $allow = false;
+
+        $allow = true;
         $manager = new course_enrolment_manager($PAGE, $course);
         $userenrolments = $manager->get_user_enrolments($userid);
-        foreach ($userenrolments as $userenrolment) {
-            if ($this->enrolmentmethodid === (int) $userenrolment->enrolid) {
-                $allow = true;
-                break;
-            }
+        $userenrolids = array_column($userenrolments , 'enrolid');
+        
+        if (!in_array($this->enrolmentmethodid, $userenrolids)) {
+            $allow = false;
         }
+        
         if ($not) {
             $allow = !$allow;
         }
@@ -172,24 +173,6 @@ class condition extends \core_availability\condition {
             if ($allow) {
                 $result[$id] = $user;
             }
-        }
-        return $result;
-    }
-
-    /**
-     * Returns a JSON object which corresponds to a condition of this type.
-     *
-     * Intended for unit testing, as normally the JSON values are constructed
-     * by JavaScript code.
-     *
-     * @param int $enrolmentmethodid Required enrolmentmethod id
-     * @return stdClass Object representing condition
-     */
-    public static function get_json($enrolmentmethodid = 0) {
-        $result = (object) array('type' => 'enrolmentmethod');
-        // Id is only included if set.
-        if ($enrolmentmethodid) {
-            $result->id = (int) $enrolmentmethodid;
         }
         return $result;
     }
