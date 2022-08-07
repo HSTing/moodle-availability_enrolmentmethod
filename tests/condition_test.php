@@ -21,8 +21,10 @@
  * @copyright 2022 Jorge C.
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
+global $CFG;
+
+require_once($CFG->dirroot . '/enrol/locallib.php');
 
 use availability_enrolmentmethod\condition;
 
@@ -45,59 +47,79 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
 
     /**
      * Tests constructing and using condition.
+     *
+     * @covers \availability_enrolmentmethod\condition::is_available()
+     * @covers \availability_enrolmentmethod\condition::get_description()
+     * @throws coding_exception
      */
     public function test_usage() {
-        global $CFG, $USER;
+        global $CFG, $USER, $PAGE;
         $this->resetAfterTest();
         $CFG->enableavailability = true;
+        $generator = self::getDataGenerator();
 
-        // Get an enrol plugin.
-        $selfenrolmethod = enrol_get_plugin('self');
-
-        // Erase static cache before test.
-        /*condition::wipe_static_cache();*/
-
-        // Make a test course and user.
-        $generator = $this->getDataGenerator();
+        // Generate course
         $course = $generator->create_course();
-        // Enable this enrol plugin for the course.
-        $enrolinstanceid = $selfenrolmethod->add_instance($course);
-        $user = $generator->create_user();
-        $generator->enrol_user($user->id, $course->id, 'student', 'self');
-        $info = new \core_availability\mock_info($course, $user->id);
 
-        // Do test (not in enrolment method).
-        $cond = new condition((object) array('id' => (int) $enrolinstanceid));
+        // Generate user and enrol with manual enrolment plugin. 
+        $manualuser = $generator->create_user();
+        $generator->enrol_user($manualuser->id, $course->id, 'student', 'manual');
 
-        // Check if available (when not available).
-        $this->assertFalse($cond->is_available(false, $info, true, $user->id));
+        // Generate user and enrol with self enrolment plugin.
+        $selfuser = $generator->create_user();
+        $generator->enrol_user($selfuser->id, $course->id, 'student', 'self');
+
+        // Get users enrolments
+        $manager = new course_enrolment_manager($PAGE, $course);
+        $manualuserenrolments = $manager->get_user_enrolments($manualuser->id);
+        $selfuserenrolments = $manager->get_user_enrolments($selfuser->id);
+
+        $info = new \core_availability\mock_info($course, $manualuser->id);
+
+        // Get enrolment instances
+        $manualenrolinstance = reset($manualuserenrolments)->enrolmentinstance;
+        $selfenrolinstance = reset($selfuserenrolments)->enrolmentinstance;
+
+        // Ensure both enrolment plugins are enabled.
+        $manualplugin = enrol_get_plugin('manual');
+        $manualplugin->update_status($manualenrolinstance, ENROL_INSTANCE_ENABLED);
+
+        $selfplugin = enrol_get_plugin('self');
+        $selfplugin->update_status($selfenrolinstance, ENROL_INSTANCE_ENABLED);
+
+        // Create condition: enrolment method must be manual.
+        $cond = new condition((object) array('id' => (int) $manualenrolinstance->id));
+
+        // Check if available for a manual enrolled user when the condition is manual enrolment.
+        $this->assertTrue($cond->is_available(false, $info, true, $manualuser->id));
+        $this->assertFalse($cond->is_available(true, $info, true, $manualuser->id));
+
+        // Check description
         $information = $cond->get_description(false, false, $info);
         $information = \core_availability\info::format_info($information, $course);
-        $this->assertMatchesRegularExpression('~You belong to.*G1!~', $information);
-        $this->assertTrue($cond->is_available(true, $info, true, $user->id));
+        $this->assertEquals(get_string('requires_enrolmentmethod',
+                'availability_enrolmentmethod', reset($manualuserenrolments)->enrolmentinstancename), $information);
 
-        // Disable enrolment method.
-        $CFG->enrol_plugins_enabled = 'manual';
-
-        // Recheck.
-        $this->assertTrue($cond->is_available(false, $info, true, $user->id));
-        $this->assertFalse($cond->is_available(true, $info, true, $user->id));
-        $information = $cond->get_description(false, true, $info);
+        // Check description with inverse condition.
+        $information = $cond->get_description(true, true, $info);
         $information = \core_availability\info::format_info($information, $course);
-        $this->assertMatchesRegularExpression('~do not belong to.*G1!~', $information);
+        $this->assertEquals(get_string('requires_notenrolmentmethod',
+                'availability_enrolmentmethod', reset($manualuserenrolments)->enrolmentinstancename), $information);
 
-        // Admin user doesn't belong to an enrolment method, but they can access it
-        // either way (positive or NOT).
-        $this->setAdminUser();
-        $this->assertTrue($cond->is_available(false, $info, true, $USER->id));
-        $this->assertTrue($cond->is_available(true, $info, true, $USER->id));
+        // Check if available for a self enrolled user when the condition is manual enrolment.
+        $info = new \core_availability\mock_info($course, $selfuser->id);
+        $this->assertFalse($cond->is_available(false, $info, true, $selfuser->id));
+        $this->assertTrue($cond->is_available(true, $info, true, $selfuser->id));
 
-        // Enrolment method that doesn't exist uses 'missing' text.
-        $cond = new condition((object) array('id' => $enrolinstanceid + 1000));
-        $this->assertFalse($cond->is_available(false, $info, true, $user->id));
-        $information = $cond->get_description(false, false, $info);
-        $information = \core_availability\info::format_info($information, $course);
-        $this->assertMatchesRegularExpression('~You belong to.*\(Missing group\)~', $information);
+        /*
+         * Now enrol self enrolled user with manual enrolment to check that is available when the condition is manual enrolment 
+         * and the user with multiple enrolments is enrolled with manual enrolment.
+         */
+
+        $generator->enrol_user($selfuser->id, $course->id, 'student', 'manual');
+        $info = new \core_availability\mock_info($course, $selfuser->id);
+        $this->assertTrue($cond->is_available(false, $info, true, $selfuser->id));
+        $this->assertFalse($cond->is_available(true, $info, true, $selfuser->id));
     }
 
     /**
@@ -118,11 +140,6 @@ class availability_enrolmentmethod_condition_testcase extends advanced_testcase 
         $structure->id = 123;
         $cond = new condition($structure);
         $this->assertEquals('{enrolmentmethod:#123}', (string) $cond);
-
-        // Valid (no id).
-        unset($structure->id);
-        $cond = new condition($structure);
-        $this->assertEquals('{group:any}', (string) $cond);
     }
 
     /**
