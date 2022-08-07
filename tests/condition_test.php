@@ -23,6 +23,9 @@
  */
 namespace availability_enrolmentmethod;
 
+use advanced_testcase;
+use course_enrolment_manager;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
