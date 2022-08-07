@@ -24,8 +24,6 @@
 
 namespace availability_enrolmentmethod\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for availability_enrolmentmethod implementing null_provider.
  *
