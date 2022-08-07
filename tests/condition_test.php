@@ -24,6 +24,7 @@
 namespace availability_enrolmentmethod;
 
 use advanced_testcase;
+use coding_exception;
 use course_enrolment_manager;
 
 defined('MOODLE_INTERNAL') || die();
@@ -128,6 +129,8 @@ class condition_test extends advanced_testcase {
     /**
      * Tests the constructor including error conditions. Also tests the
      * string conversion feature (intended for debugging only).
+     *
+     * @throws coding_exception
      */
     public function test_constructor() {
         // Invalid id (not int).
