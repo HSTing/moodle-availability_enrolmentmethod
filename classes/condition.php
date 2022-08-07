@@ -23,9 +23,8 @@
  */
 
 namespace availability_enrolmentmethod;
-require_once($CFG->dirroot . '/enrol/locallib.php');
-
 use course_enrolment_manager;
+require_once($CFG->dirroot . '/enrol/locallib.php');
 
 defined('MOODLE_INTERNAL') || die();
 

@@ -23,11 +23,11 @@
  */
 
 namespace availability_enrolmentmethod;
-require_once($CFG->dirroot . '/enrol/locallib.php');
-
-use course_enrolment_manager;
 
 defined('MOODLE_INTERNAL') || die();
+use course_enrolment_manager;
+
+require_once($CFG->dirroot . '/enrol/locallib.php');
 
 /**
  * Front-end class.
@@ -37,8 +37,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class frontend extends \core_availability\frontend {
-    /** @var array Array of enrolment methods info for course */
-    protected array $allenrolmentmethods;
 
     protected function get_javascript_init_params($course, \cm_info $cm = null,
             \section_info $section = null) {
