@@ -65,7 +65,7 @@ class condition_test extends advanced_testcase {
 
         // Generate course.
         $course = $generator->create_course();
-        // Generate user and enrol with manual enrolment plugin. 
+        // Generate user and enrol with manual enrolment plugin.
         $manualuser = $generator->create_user();
         $generator->enrol_user($manualuser->id, $course->id, 'student', 'manual');
 

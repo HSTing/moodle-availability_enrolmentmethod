@@ -23,10 +23,10 @@
  */
 
 namespace availability_enrolmentmethod;
+defined('MOODLE_INTERNAL') || die();
 use course_enrolment_manager;
 require_once($CFG->dirroot . '/enrol/locallib.php');
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Condition main class.
@@ -72,11 +72,9 @@ class condition extends \core_availability\condition {
         $manager = new course_enrolment_manager($PAGE, $course);
         $userenrolments = $manager->get_user_enrolments($userid);
         $userenrolids = array_column($userenrolments , 'enrolid');
-        
         if (!in_array($this->enrolmentmethodid, $userenrolids)) {
             $allow = false;
         }
-        
         if ($not) {
             $allow = !$allow;
         }
@@ -85,10 +83,8 @@ class condition extends \core_availability\condition {
 
     public function get_description($full, $not, \core_availability\info $info) {
         global $PAGE;
-        
         if ($this->enrolmentmethodid) {
             $course = $info->get_course();
-            
             $manager = new course_enrolment_manager($PAGE, $course);
             $enrolmentmethodnames = $manager->get_enrolment_instance_names(true);
 
