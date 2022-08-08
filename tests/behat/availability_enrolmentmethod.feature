@@ -50,3 +50,4 @@ Feature: availability_enrolmentmethod
     And I log in as "student2"
     When I am on "Course 1" course homepage
     Then I should not see "P1" in the "region-main" "region"
+    
