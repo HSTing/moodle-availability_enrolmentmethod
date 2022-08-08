@@ -42,8 +42,6 @@ require_once($CFG->dirroot . '/enrol/locallib.php');
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class condition extends \core_availability\condition {
-    /** @var int ID of enrolment method that this condition requires */
-    protected int $enrolmentmethodid;
 
     /**
      * Constructor.
