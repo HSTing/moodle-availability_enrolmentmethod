@@ -58,7 +58,7 @@ class condition_test extends advanced_testcase {
      * @throws coding_exception
      */
     public function test_usage() {
-        global $CFG, $USER, $PAGE;
+        global $CFG, $PAGE;
         $this->resetAfterTest();
         $CFG->enableavailability = true;
         $generator = self::getDataGenerator();
