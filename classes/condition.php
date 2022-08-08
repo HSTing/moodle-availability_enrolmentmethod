@@ -43,7 +43,7 @@ require_once($CFG->dirroot . '/enrol/locallib.php');
  */
 class condition extends \core_availability\condition {
     /** @var int ID of enrolment method that this condition requires */
-    protected $enrolmentmethodid;
+    protected int $enrolmentmethodid;
 
     /**
      * Constructor.
@@ -74,7 +74,6 @@ class condition extends \core_availability\condition {
         }
         return $result;
     }
-    
     /**
      * Check if the item is available with this restriction.
      *
@@ -176,6 +175,10 @@ class condition extends \core_availability\condition {
         return true;
     }
 
+    /**
+     * Checks whether this condition applies to user lists.
+     * @return bool
+     */
     public function is_applied_to_user_lists() {
         // Enrolment method conditions are assumed to be 'permanent', so they affect the
         // display of user lists for activities.
