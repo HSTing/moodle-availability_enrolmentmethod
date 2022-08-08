@@ -24,7 +24,13 @@
 
 namespace availability_enrolmentmethod;
 defined('MOODLE_INTERNAL') || die();
+
+use coding_exception;
+use core_availability\capability_checker;
+use core_availability\info;
 use course_enrolment_manager;
+use dml_exception;
+
 require_once($CFG->dirroot . '/enrol/locallib.php');
 
 
@@ -43,19 +49,24 @@ class condition extends \core_availability\condition {
      * Constructor.
      *
      * @param \stdClass $structure Data structure from JSON decode
-     * @throws \coding_exception If invalid data structure.
+     * @throws coding_exception If invalid data structure.
      */
-    public function __construct($structure) {
+    public function __construct(\stdClass $structure) {
         // Get enrolment method id.
         if (!property_exists($structure, 'id')) {
             $this->enrolmentmethodid = 0;
         } else if (is_int($structure->id)) {
             $this->enrolmentmethodid = $structure->id;
         } else {
-            throw new \coding_exception('Invalid ->id for enrolment method condition');
+            throw new coding_exception('Invalid ->id for enrolment method condition');
         }
     }
 
+    /**
+     * Save.
+     *
+     * @return object|\stdClass $result
+     */
     public function save() {
         $result = (object) array('type' => 'enrolmentmethod');
         if ($this->enrolmentmethodid) {
@@ -63,8 +74,18 @@ class condition extends \core_availability\condition {
         }
         return $result;
     }
-
-    public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
+    
+    /**
+     * Check if the item is available with this restriction.
+     *
+     * @param bool                    $not
+     * @param info $info
+     * @param bool                    $grabthelot
+     * @param int                     $userid
+     *
+     * @return bool
+     */
+    public function is_available($not, info $info, $grabthelot, $userid) {
         global $PAGE;
         $course = $info->get_course();
 
@@ -81,7 +102,17 @@ class condition extends \core_availability\condition {
         return $allow;
     }
 
-    public function get_description($full, $not, \core_availability\info $info) {
+    /**
+     * Retrieve the description for the restriction.
+     *
+     * @param bool                    $full
+     * @param bool                    $not
+     * @param info $info
+     *
+     * @return string
+     * @throws coding_exception
+     */
+    public function get_description($full, $not, info $info) {
         global $PAGE;
         if ($this->enrolmentmethodid) {
             $course = $info->get_course();
@@ -101,10 +132,26 @@ class condition extends \core_availability\condition {
                 'availability_enrolmentmethod', $name);
     }
 
+    /**
+     * Retrieve debugging string.
+     *
+     * @return string
+     */
     protected function get_debug_string() {
         return $this->enrolmentmethodid ? '#' . $this->enrolmentmethodid : 'any';
     }
 
+    /**
+     * Adding the availability to restored course items.
+     *
+     * @param string       $restoreid
+     * @param int          $courseid
+     * @param \base_logger $logger
+     * @param string       $name
+     *
+     * @return bool
+     * @throws dml_exception
+     */
     public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
         global $DB;
         if (!$this->enrolmentmethodid) {
@@ -135,7 +182,17 @@ class condition extends \core_availability\condition {
         return true;
     }
 
-    public function filter_user_list(array $users, $not, \core_availability\info $info,
+    /**
+     * Tests against a user list. Users who cannot access the activity due to
+     * availability restrictions will be removed from the list.
+     *
+     * @param array $users Array of userid => object
+     * @param bool $not If tree's parent indicates it's being checked negatively
+     * @param info $info Info about current context
+     * @param capability_checker $checker Capability checker
+     * @return array Filtered version of input array
+     */
+    public function filter_user_list(array $users, $not, info $info,
             \core_availability\capability_checker $checker) {
         global $PAGE;
 

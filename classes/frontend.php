@@ -38,6 +38,15 @@ require_once($CFG->dirroot . '/enrol/locallib.php');
  */
 class frontend extends \core_availability\frontend {
 
+    /**
+     * Get the initial parameters needed for JavaScript.
+     *
+     * @param \stdClass          $course
+     * @param \cm_info|null      $cm
+     * @param \section_info|null $section
+     *
+     * @return array
+     */
     protected function get_javascript_init_params($course, \cm_info $cm = null,
             \section_info $section = null) {
         global $PAGE;
@@ -69,6 +78,15 @@ class frontend extends \core_availability\frontend {
         return $this->allenrolmentmethods;
     }
 
+    /**
+     * Decides whether this plugin should be available in a given course.
+     *
+     * @param \stdClass          $course
+     * @param \cm_info|null      $cm
+     * @param \section_info|null $section
+     *
+     * @return bool
+     */
     protected function allow_add($course, \cm_info $cm = null,
             \section_info $section = null) {
         // Only show this option if there are some enrolment methods.
