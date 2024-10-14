@@ -25,7 +25,12 @@
 namespace availability_enrolmentmethod;
 
 defined('MOODLE_INTERNAL') || die();
+
+use cm_info;
 use course_enrolment_manager;
+use dml_exception;
+use section_info;
+use stdClass;
 
 require_once($CFG->dirroot . '/enrol/locallib.php');
 
@@ -41,14 +46,13 @@ class frontend extends \core_availability\frontend {
     /**
      * Get the initial parameters needed for JavaScript.
      *
-     * @param \stdClass          $course
-     * @param \cm_info|null      $cm
-     * @param \section_info|null $section
+     * @param stdClass          $course
+     * @param cm_info|null      $cm
+     * @param section_info|null $section
      *
      * @return array
      */
-    protected function get_javascript_init_params($course, \cm_info $cm = null,
-            \section_info $section = null) {
+    protected function get_javascript_init_params($course, cm_info $cm = null, section_info $section = null): array {
         global $PAGE;
 
         $manager = new course_enrolment_manager($PAGE, $course);
@@ -63,32 +67,31 @@ class frontend extends \core_availability\frontend {
         }
         return array($jsarray);
     }
-
+    
     /**
      * Gets all enrolment methods for the given course.
      *
      * @param int $courseid Course id
      * @return array Array of all the enrolment method objects
+     * @throws dml_exception
      */
-    protected function get_all_enrolmentmethods($courseid) {
+    private function get_all_enrolmentmethods(int $courseid): array {
         global $PAGE;
         $course = get_course($courseid);
-        $manager = new course_enrolment_manager($PAGE, $course);
-        $this->allenrolmentmethods = $manager->get_enrolment_instances(true);
-        return $this->allenrolmentmethods;
+        return (new course_enrolment_manager($PAGE, $course))->get_enrolment_instances(true);
     }
-
+    
     /**
      * Decides whether this plugin should be available in a given course.
      *
-     * @param \stdClass          $course
-     * @param \cm_info|null      $cm
-     * @param \section_info|null $section
+     * @param stdClass $course
+     * @param cm_info|null $cm
+     * @param section_info|null $section
      *
      * @return bool
+     * @throws dml_exception
      */
-    protected function allow_add($course, \cm_info $cm = null,
-            \section_info $section = null) {
+    protected function allow_add($course, cm_info $cm = null, section_info $section = null): bool {
         // Only show this option if there are some enrolment methods.
         return count($this->get_all_enrolmentmethods($course->id)) > 0;
     }

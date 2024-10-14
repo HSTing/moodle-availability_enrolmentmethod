@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -30,6 +31,7 @@ use core_availability\capability_checker;
 use core_availability\info;
 use course_enrolment_manager;
 use dml_exception;
+use stdClass;
 
 require_once($CFG->dirroot . '/enrol/locallib.php');
 
@@ -42,14 +44,15 @@ require_once($CFG->dirroot . '/enrol/locallib.php');
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class condition extends \core_availability\condition {
-
+    private int $enrolmentmethodid;
+    
     /**
      * Constructor.
      *
-     * @param \stdClass $structure Data structure from JSON decode
+     * @param stdClass $structure Data structure from JSON decode
      * @throws coding_exception If invalid data structure.
      */
-    public function __construct(\stdClass $structure) {
+    public function __construct(stdClass $structure) {
         // Get enrolment method id.
         if (!property_exists($structure, 'id')) {
             $this->enrolmentmethodid = 0;
@@ -63,7 +66,7 @@ class condition extends \core_availability\condition {
     /**
      * Save.
      *
-     * @return object|\stdClass $result
+     * @return object|stdClass $result
      */
     public function save() {
         $result = (object) array('type' => 'enrolmentmethod');
