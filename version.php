@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2024101400;
+$plugin->release = 2024101400;
 $plugin->requires = 2021051100;
 $plugin->component = 'availability_enrolmentmethod';
-$plugin->release = 'v4.0-r1';
 $plugin->maturity = MATURITY_STABLE;
